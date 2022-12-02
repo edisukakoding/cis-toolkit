@@ -1,0 +1,62 @@
+doctype html
+head
+    meta(charset='utf-8')
+    meta(http-equiv='X-UA-Compatible' content='IE=edge')
+    meta(name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no')
+    meta(name='description' content='')
+    meta(name='author' content='')
+    title CIS - Tools
+
+    //- jquery
+    script(src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js')
+
+    //- sb admin
+    link(href='vendor/sbadmin/css/styles.css' rel='stylesheet')
+    script(src='https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js' crossorigin='anonymous')
+    script(src='vendor/sbadmin/js/scripts.js')
+
+    //- dropzone
+    script(src='https://unpkg.com/dropzone@5/dist/min/dropzone.min.js')
+    link(rel='stylesheet' href='https://unpkg.com/dropzone@5/dist/min/dropzone.min.css' type='text/css')
+
+    //- pdf viewer
+    link(href='https://fonts.googleapis.com/icon?family=Material+Icons+Outlined' rel='stylesheet')
+    script(src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js')
+    script(src='vendor/web-pdf-viewer/js/pdfjs-viewer.js')
+    link(href='vendor/web-pdf-viewer/css/pdfjs-viewer.css' rel='stylesheet' )
+    //- link(href='vendor/web-pdf-viewer/css/pdftoolbar.css' rel='stylesheet' )
+    script.
+        // Let's initialize the PDFjs library
+        var pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+
+    //- custom css
+    link(href='stylesheets/style.css' rel='stylesheet' )
+body
+    nav.sb-topnav.navbar.navbar-expand.navbar-dark.bg-dark
+        a.navbar-brand.ps-3(href='/') CIS Toolkit
+        button#sidebarToggle.btn.btn-link.btn-sm.order-1.order-lg-0.me-4.me-lg-0(href='#!')
+            i.fas.fa-bars
+    #layoutSidenav
+        #layoutSidenav_nav
+            nav#sidenavAccordion.sb-sidenav.accordion.sb-sidenav-light
+                .sb-sidenav-menu
+                    .nav
+                        .sb-sidenav-menu-heading Core
+                        a.nav-link(href='/pdf-merge')
+                            .sb-nav-link-icon
+                                i.fas.fa-tachometer-alt
+                            |                                 PDF Merge
+        #layoutSidenav_content
+            main
+                .container-fluid.px-4
+                    block content
+            footer.py-4.bg-light.mt-auto
+                .container-fluid.px-4
+                    .d-flex.align-items-center.justify-content-between.small
+                        .text-muted Copyright &copy; Your Website 2022
+                        div
+                            a(href='#') Privacy Policy
+                            |                                 &middot;
+                            a(href='#') Terms &amp; Conditions
+

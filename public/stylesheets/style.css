@@ -1,0 +1,64 @@
+.navbar {
+  background-color: #A6C054 !important;
+}
+
+.sb-sidenav {
+  background-color: #f5fcc9 !important;
+}
+
+.nav-link:hover {
+  color: #A6C054 !important;
+}
+
+.nav-link,
+.sb-sidenav-menu-heading {
+  color: #7B7B7B !important;
+}
+
+.sb-nav-link-icon {
+  color: #A6C054 !important;
+}
+
+.pdftoolbar,
+.pdftoolbar i {
+  font-size: 14px !important;
+}
+
+.pdftoolbar span {
+  margin-right: 0.5em;
+  margin-left: 0.5em;
+  width: 4em !important;
+  font-size: 12px;
+}
+
+.pdftoolbar .btn-sm {
+  padding: 0.12rem 0.25rem;
+  margin: 2px;
+}
+
+.pdftoolbar {
+  width: 100%;
+  height: auto;
+  background: #ddd;
+  z-index: 100;
+}
+
+.pdfjs-viewer {
+  height: calc(100vh - 200px);
+}
+
+.btn-hapus:hover {
+  opacity: .7;
+}
+
+#list-files tr {
+  cursor: pointer;
+}
+
+#list-files tr.active {
+  background-color: #f5fcc9;
+}
+
+.hide {
+  display: none;
+}
