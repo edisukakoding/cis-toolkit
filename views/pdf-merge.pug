@@ -271,7 +271,8 @@ block content
                 success: function (res) {
                     if(res.status) {
                         $('#btn-proses').html('Proses').prop('disabled', false);
-                        window.open(window.location.origin + '/pdf/download/' + res.message.filename, '_blank');
+                        // window.open(window.location.origin + '/pdf/download/' + res.message.filename, '_blank');
+                        window.location.href = '/pdf/download/' + res.message.filename;
                         const reload = confirm('Proses berhasil, apakah anda ingin menghapus file sebelumnya?');
                         if(reload) {
                             console.log('menghapus...');

@@ -16,7 +16,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({storage: storage});
 
-router.get('/pdf-merge', function (req, res) {
+router.get('/', function (req, res) {
     res.render('pdf-merge');
 });
 
