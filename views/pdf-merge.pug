@@ -19,12 +19,15 @@ block content
                                 th Size 
                         tbody
             .row.mt-3
-                .col-xl-12.col-md-12
-                    button.btn.btn-primary.btn-sm(type="button" onclick="tandai(this)") Tandai
+                .col-xl-6.col-md-6
+                    .form-floating.mb-3
+                        input#namafile.form-control(type='text' placeholder='PDF-MERGE')
+                        label(for='namafile') Nama File (Tanpa Ekstensi)
+                    button.btn.btn-primary(type="button" onclick="tandai(this)") Tandai
                     | &nbsp;
-                    button.btn.btn-danger.btn-sm.hide#btn-hapus(type="button" onclick="hapus(this)") Hapus
+                    button.btn.btn-danger.hide#btn-hapus(type="button" onclick="hapus(this)") Hapus
                     | &nbsp;
-                    button.btn.btn-success.btn-sm#btn-proses(type="button") Proses
+                    button.btn.btn-success#btn-proses(type="button") Proses
         .col-xl-6.col-md-6
             .row.h-100
                 .row.col-12.pdfviewer.row.h-100
@@ -124,12 +127,12 @@ block content
             if ($('#list-files > tbody > tr > td:first-child > input').hasClass('hide')) {
                 $('#list-files > tbody > tr > td:first-child > input').removeClass('hide');
                 $(e).text('Batal');
-                $($(e).siblings()[0]).removeClass('hide');
+                $($(e).siblings()[1]).removeClass('hide');
                 $('#mark-all').removeClass('hide');
             } else {
                 $('#list-files > tbody > tr > td:first-child > input').addClass('hide');
                 $(e).text('Tandai');
-                $($(e).siblings()[0]).addClass('hide');
+                $($(e).siblings()[1]).addClass('hide');
                 $('#mark-all').addClass('hide');
                 $('input[type="checkbox"]').each(function (i, e) {
                     $(e).prop('checked', false);
@@ -262,21 +265,31 @@ block content
                 return false;
             }
 
+            if($('#namafile').val() === '') {
+                $('#btn-proses').html('Proses').prop('disabled', false);
+                $('#namafile').addClass('is-invalid');
+                alert('Nama File tidak boleh kosong');
+                return false;
+            }
+
             $.ajax({
                 url: '/pdf/process',
                 type: 'POST',
                 dataType: 'json',
                 contentType: 'application/json',
-                data: JSON.stringify(data),
+                data: JSON.stringify({namafile: $('#namafile').val(), data: data}),
                 success: function (res) {
                     if(res.status) {
                         $('#btn-proses').html('Proses').prop('disabled', false);
                         // window.open(window.location.origin + '/pdf/download/' + res.message.filename, '_blank');
                         window.location.href = '/pdf/download/' + res.message.filename;
+                        $('#namafile').val('');
                         const reload = confirm('Proses berhasil, apakah anda ingin menghapus file sebelumnya?');
                         if(reload) {
                             $('.data-check').each(function (i, e) {
-                                $(e).prop('checked', true);
+                                if(data.includes($(e).data('file'))) {
+                                    $(e).prop('checked', true);
+                                }
                             });
 
                             $('#btn-hapus').trigger('click');

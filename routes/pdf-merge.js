@@ -49,9 +49,10 @@ router.post('/delete', (req, res) => {
 });
 
 router.post('/process', async function (req, res, next) {
-    if(req.body.length) {
-        const files = req.body.map(d => path.join(__dirname, '../public/pdfs', d));
-        const filename = `result-${Date.now()}.pdf`;
+    const request = req.body;
+    if(request.data.length) {
+        const files = request.data.map(d => path.join(__dirname, '../public/pdfs', d));
+        const filename = `${request.namafile}.pdf`;
         const filepath = path.join(__dirname, '../public/pdfs/', filename);
 
         try {
