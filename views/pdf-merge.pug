@@ -22,7 +22,7 @@ block content
                 .col-xl-12.col-md-12
                     button.btn.btn-primary.btn-sm(type="button" onclick="tandai(this)") Tandai
                     | &nbsp;
-                    <button class="btn btn-danger btn-sm hide" type="button" onclick="hapus(this)">Hapus</button>
+                    button.btn.btn-danger.btn-sm.hide#btn-hapus(type="button" onclick="hapus(this)") Hapus
                     | &nbsp;
                     button.btn.btn-success.btn-sm#btn-proses(type="button") Proses
         .col-xl-6.col-md-6
@@ -275,7 +275,11 @@ block content
                         window.location.href = '/pdf/download/' + res.message.filename;
                         const reload = confirm('Proses berhasil, apakah anda ingin menghapus file sebelumnya?');
                         if(reload) {
-                            console.log('menghapus...');
+                            $('.data-check').each(function (i, e) {
+                                $(e).prop('checked', true);
+                            });
+
+                            $('#btn-hapus').trigger('click');
                         }
                     }else {
                         alert(res.message);
