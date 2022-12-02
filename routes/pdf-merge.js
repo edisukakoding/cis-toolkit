@@ -33,7 +33,15 @@ router.post('/upload', upload.single('file'), (req, res) => {
 router.post('/delete', (req, res) => {
     if (req.body.length) {
         req.body.forEach(function (e) {
-            fs.unlinkSync(path.join(__dirname, '../public/pdfs', e));
+            try {
+                fs.unlinkSync(path.join(__dirname, '../public/pdfs', e));
+            }catch (e) {
+                console.log(e.message);
+                return res.json({
+                    status: false,
+                    message: e.message
+                })
+            }
         });
     }
 
