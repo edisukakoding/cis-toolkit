@@ -272,7 +272,10 @@ block content
                     if(res.status) {
                         $('#btn-proses').html('Proses').prop('disabled', false);
                         window.open(window.location.origin + '/pdf/download/' + res.message.filename, '_blank');
-                        window.location.reload();
+                        const reload = confirm('Proses berhasil, apakah anda ingin menghapus file sebelumnya?');
+                        if(reload) {
+                            console.log('menghapus...');
+                        }
                     }else {
                         alert(res.message);
                     }
