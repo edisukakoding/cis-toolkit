@@ -17,7 +17,7 @@ block content
                                     input.form-check-input.hide(type="checkbox" id="mark-all")
                                 th File 
                                 th Size 
-                                th(style="width: 18%") Halaman
+                                th(style="width: 24%") Halaman
                         tbody
                     hr
             .row.mt-3
@@ -88,7 +88,7 @@ block content
                     const storages = getStorage();
                     if ( storages !== null && storages.length) {
                         files = [
-                            ...JSON.parse(storages),
+                            ...storages,
                             {
                                 id: Date.now(),
                                 filename: resp.filename,
