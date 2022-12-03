@@ -17,12 +17,14 @@ block content
                                     input.form-check-input.hide(type="checkbox" id="mark-all")
                                 th File 
                                 th Size 
+                                th(style="width: 18%") Halaman
                         tbody
+                    hr
             .row.mt-3
                 .col-xl-6.col-md-6
-                    .form-floating.mb-3
-                        input#namafile.form-control(type='text' placeholder='PDF-MERGE')
-                        label(for='namafile') Nama File (Tanpa Ekstensi)
+                    .mb-3
+                        label.form-label(for='namafile') Nama File
+                        input#namafile.form-control(type='text' placeholder='PDF-MERGE (tanpa ekstensi)')
                     button.btn.btn-primary(type="button" onclick="tandai(this)") Tandai
                     | &nbsp;
                     button.btn.btn-danger.hide#btn-hapus(type="button" onclick="hapus(this)") Hapus
@@ -56,6 +58,10 @@ block content
                                 i.material-icons-outlined fit_screen
                     .pdfjs-viewer
     script(type='text/javascript').
+        const markAll   = $('#mark-all');
+        const namaFile  = $('#namafile');
+
+
         let pdfViewer = new PDFjsViewer($('.pdfjs-viewer'), {
             onZoomChange: function (zoom) {
                 zoom = parseInt(zoom * 10000) / 100;
@@ -66,11 +72,11 @@ block content
             },
         });
 
-        const files = localStorage.getItem('files');
-        if (files !== null && files.length) {
-            genList(JSON.parse(files));
+        if (getStorage().length) {
+            genList(getStorage());
             genThumbnail();
         }
+
         Dropzone.options.uploadWidget = {
             paramName: 'file',
             maxFilesize: 10, // MB
@@ -79,22 +85,29 @@ block content
             init: function () {
                 this.on('success', function (file, resp) {
                     let files = [];
-                    if (localStorage.getItem('files') && localStorage.getItem('files').length) {
+                    const storages = getStorage();
+                    if ( storages !== null && storages.length) {
                         files = [
-                            ...JSON.parse(localStorage.getItem('files')),
+                            ...JSON.parse(storages),
                             {
+                                id: Date.now(),
                                 filename: resp.filename,
                                 originalname: resp.originalname,
-                                size: resp.size
+                                size: resp.size,
+                                mark: false,
+                                pages: ''
                             }
                         ]
                     } else {
                         files = [
                             ...files,
                             {
+                                id: Date.now(),
                                 filename: resp.filename,
                                 originalname: resp.originalname,
-                                size: resp.size
+                                size: resp.size,
+                                mark: false,
+                                pages: ''
                             }
                         ];
                     }
@@ -111,15 +124,16 @@ block content
             if (files.length) {
                 let html = '';
                 files.forEach(function (e) {
-                    html += `<tr onclick="show(this, '${e.filename}')">
-                                <td><input type="checkbox" class="form-check-input hide data-check" data-file="${e.filename}"/></td>
-                                <td>${e.originalname}</td>
+                    html += `<tr>
+                                <td><input type="checkbox" class="form-check-input hide data-check" data-file="${e.filename}" data-id="${e.id}" onchange="handleMark(this)"/></td>
+                                <td onclick="show(this, '${e.filename}')" class="file-name">${e.originalname}</td>
                                 <td>${(parseInt(e.size) / 1000000).toFixed(1)} MB</td>
+                                <td><input type="text" class="form-control form-control-sm data-halaman" data-id="${e.id}" onchange="handleHalaman(this)" placeholder="Ex: 1,3,5 | 2-5 | 9"/></td>
                             </tr>`;
                 });
                 $('#list-files > tbody').html(html);
             } else {
-                $('#list-files > tbody').html('<tr><td colspan="3" class="text-center">Tidak ada data</td></tr>');
+                $('#list-files > tbody').html('<tr><td colspan="4" class="text-center">Tidak ada data</td></tr>');
             }
         }
 
@@ -128,44 +142,38 @@ block content
                 $('#list-files > tbody > tr > td:first-child > input').removeClass('hide');
                 $(e).text('Batal');
                 $($(e).siblings()[1]).removeClass('hide');
-                $('#mark-all').removeClass('hide');
+                markAll.removeClass('hide');
             } else {
                 $('#list-files > tbody > tr > td:first-child > input').addClass('hide');
                 $(e).text('Tandai');
                 $($(e).siblings()[1]).addClass('hide');
-                $('#mark-all').addClass('hide');
+                markAll.addClass('hide');
                 $('input[type="checkbox"]').each(function (i, e) {
                     $(e).prop('checked', false);
-                })
+                });
+
+                setStorage(getStorage().map(d => ({...d, mark: false})));
             }
         }
 
         function show(el, file) {
-            if ($(el).find('input').hasClass('hide')) {
-                pdfViewer.loadDocument(`pdfs/${file}`).then(function () {
-                    pdfViewer.setZoom('fit');
-                });
-            } else {
-                if ($(el).find('input').is(':checked')) {
-                    $(el).find('input').prop('checked', false);
-                } else {
-                    $(el).find('input').prop('checked', true);
-                }
-            }
+            pdfViewer.loadDocument(`pdfs/${file}`).then(function () {
+                pdfViewer.setZoom('fit');
+            });
 
             $('#list-files > tbody > tr').each(function (i, e) {
                 $(e).removeClass('active');
             });
-            $(el).addClass('active');
+
+            $(el).parents('tr').addClass('active');
         }
 
         function hapus(el) {
-            let data = [];
-            $('.data-check').each(function (i, e) {
-                if ($(e).is(':checked')) {
-                    data = [...data, $(e).data('file')];
-                }
-            });
+            const data = getStorage().filter(d => d.mark === true).map(d => d.filename);
+
+            if(!data.length) {
+                return false;
+            }
 
             $.ajax({
                 url: '/pdf/delete',
@@ -173,21 +181,22 @@ block content
                 dataType: 'json',
                 contentType: 'application/json',
                 data: JSON.stringify(data),
-                success: function () {
-                    let storages = localStorage.getItem('files');
-                    if (storages !== null && storages.length) {
-                        storages = JSON.parse(storages);
-                        data.forEach(function (e) {
-                            storages = storages.filter(d => d.filename !== e);
-                        });
-                        localStorage.setItem('files', JSON.stringify(storages));
-                        genList(storages);
-                        $(el).addClass('hide');
-                        $('#mark-all').addClass('hide');
-                        $($(el).siblings()[0]).text('Tandai');
-                        genThumbnail();
-
+                success: function (res) {
+                    if(!res.status) {
+                        alert(res.message);
+                        return false;
                     }
+
+                    let storages = getStorage();
+                    data.forEach(function (e) {
+                        storages = storages.filter(d => d.filename !== e);
+                    });
+                    setStorage(storages);
+                    genList(storages);
+                    $(el).addClass('hide');
+                    markAll.addClass('hide');
+                    $($(el).siblings()[1]).text('Tandai');
+                    genThumbnail();
                 },
                 error: function (err) {
                     console.log(err)
@@ -195,15 +204,21 @@ block content
             });
         }
 
-        $('#mark-all').on('change', function () {
+        markAll.on('change', function () {
+            const storages = getStorage();
+
             if($(this).is(':checked')) {
                 $('.data-check').each(function (i, e) {
-                    $(e).prop('checked', true)
+                    $(e).prop('checked', true);
                 });
+
+                setStorage(storages.map(d => ({...d, mark: true})));
             }else {
                 $('.data-check').each(function (i, e) {
-                    $(e).prop('checked', false)
-                })
+                    $(e).prop('checked', false);
+                });
+
+                setStorage(storages.map(d => ({...d, mark: false})));
             }
         });
 
@@ -219,7 +234,7 @@ block content
                     $('#upload-widget').append(`
                         <div class="dz-preview dz-file-preview dz-processing dz-success dz-complete">
                             <div class="dz-image">
-                                <img data-dz-thumbnail="" src="/pdf.png">
+                                <img data-dz-thumbnail="" src="/pdf.png" alt="${file.originalname}">
                             </div>
                             <div class="dz-details">
                                 <div class="dz-size">
@@ -239,18 +254,10 @@ block content
         $('#btn-proses').on('click', function () {
             $(this).html(`<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>Loading...`).prop('disabled', true);
 
-            let data = [];
-            $('.data-check').each(function (i, e) {
-                if ($(e).is(':checked')) {
-                    data = [...data, $(e).data('file')];
-                }
-            });
-
-            if(!data.length) {
-                let storages = localStorage.getItem('files');
-                if(storages !== null && storages.length) {
-                    data = JSON.parse(storages).map(d => d.filename);
-                }
+            let data  = getStorage();
+            const check = data.filter(d => d.mark === true);
+            if(check.length) {
+                data = check;
             }
 
             if(!data.length) {
@@ -265,9 +272,9 @@ block content
                 return false;
             }
 
-            if($('#namafile').val() === '') {
+            if(namaFile.val() === '') {
                 $('#btn-proses').html('Proses').prop('disabled', false);
-                $('#namafile').addClass('is-invalid');
+                namaFile.addClass('is-invalid');
                 alert('Nama File tidak boleh kosong');
                 return false;
             }
@@ -277,21 +284,17 @@ block content
                 type: 'POST',
                 dataType: 'json',
                 contentType: 'application/json',
-                data: JSON.stringify({namafile: $('#namafile').val(), data: data}),
+                data: JSON.stringify({
+                    namafile: namaFile.val(),
+                    data: data
+                }),
                 success: function (res) {
                     if(res.status) {
                         $('#btn-proses').html('Proses').prop('disabled', false);
-                        // window.open(window.location.origin + '/pdf/download/' + res.message.filename, '_blank');
                         window.location.href = '/pdf/download/' + res.message.filename;
-                        $('#namafile').val('');
+                        namaFile.val('');
                         const reload = confirm('Proses berhasil, apakah anda ingin menghapus file sebelumnya?');
                         if(reload) {
-                            $('.data-check').each(function (i, e) {
-                                if(data.includes($(e).data('file'))) {
-                                    $(e).prop('checked', true);
-                                }
-                            });
-
                             $('#btn-hapus').trigger('click');
                         }
                     }else {
@@ -304,3 +307,39 @@ block content
             });
         });
 
+        function handleHalaman(e) {
+            const data = getStorage().map((d) => {
+                if ($(e).data('id') === d.id) {
+                    return {...d, pages: $(e).val()}
+                }
+
+                return d;
+            });
+
+            setStorage(data);
+        }
+
+        function handleMark(e) {
+            const data = getStorage().map((d) => {
+                if ($(e).data('id') === d.id) {
+                    return {...d, mark: $(e).is(':checked')}
+                }
+
+                return d;
+            });
+
+            setStorage(data);
+        }
+
+        function getStorage() {
+            const storages = localStorage.getItem('files');
+            if(storages !== null && storages.length) {
+                return JSON.parse(storages);
+            }
+
+            return [];
+        }
+
+        function setStorage(data) {
+            localStorage.setItem('files', JSON.stringify(data));
+        }

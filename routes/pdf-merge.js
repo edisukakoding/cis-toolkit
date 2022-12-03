@@ -3,7 +3,7 @@ const router = express.Router();
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const PDFMerge = require('pdf-merge');
+const PDFMerger = require('pdf-merger-js');
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -45,18 +45,31 @@ router.post('/delete', (req, res) => {
         });
     }
 
-    res.json(req.body);
+    res.json({
+        status: true,
+        message: 'Successfully'
+    });
 });
 
-router.post('/process', async function (req, res, next) {
-    const request = req.body;
-    if(request.data.length) {
-        const files = request.data.map(d => path.join(__dirname, '../public/pdfs', d));
-        const filename = `${request.namafile}.pdf`;
-        const filepath = path.join(__dirname, '../public/pdfs/', filename);
+
+router.post('/process', async function(req, res, next) {
+   const request = req.body;
+   if(request.data.length) {
+       const files = request.data.map(d => ({...d, filename : path.join(__dirname, '../public/pdfs', d.filename)}));
+       const filename = `${request.namafile}.pdf`;
+       const filepath = path.join(__dirname, '../public/pdfs/', filename);
 
         try {
-            await PDFMerge(files, { output: filepath });
+            const merger = new PDFMerger();
+            for (const file of files) {
+                if(file.pages !== '') {
+                    await merger.add(file.filename, file.pages);
+                }else {
+                    await merger.add(file.filename);
+                }
+            }
+
+            await merger.save(filepath);
         }catch (e) {
             next(e);
             return res.json({
@@ -65,16 +78,16 @@ router.post('/process', async function (req, res, next) {
             });
         }
 
-        const fileinfo = fs.statSync(filepath);
-        return res.json({
-            status: true,
-            message: {
-                filename: filename,
-                size: fileinfo.size,
-                originalname: filename
-            }
-        })
-    }
+       const fileinfo = fs.statSync(filepath);
+       return res.json({
+           status: true,
+           message: {
+               filename: filename,
+               size: fileinfo.size,
+               originalname: filename
+           }
+       });
+   }
 });
 
 router.get('/download/:filename', function (req, res) {

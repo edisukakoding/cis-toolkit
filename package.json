@@ -13,7 +13,7 @@
 		"http-errors": "~1.6.3",
 		"morgan": "~1.9.1",
 		"multer": "^1.4.5-lts.1",
-		"pdf-merge": "^1.2.0",
+		"pdf-merger-js": "^4.1.2",
 		"pug": "2.0.0-beta11"
 	}
 }

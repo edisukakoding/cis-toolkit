@@ -51,8 +51,12 @@
   opacity: .7;
 }
 
-#list-files tr {
+#list-files tr .file-name {
   cursor: pointer;
+}
+
+#list-files tr .file-name:hover {
+  text-decoration: underline;
 }
 
 #list-files tr.active {
