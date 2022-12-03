@@ -295,6 +295,9 @@ block content
                         namaFile.val('');
                         const reload = confirm('Proses berhasil, apakah anda ingin menghapus file sebelumnya?');
                         if(reload) {
+                            if(data.length === getStorage().length) {
+                                setStorage(getStorage().map(d => ({...d, mark: true})));
+                            }
                             $('#btn-hapus').trigger('click');
                         }
                     }else {
