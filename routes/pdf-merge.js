@@ -62,6 +62,7 @@ router.post('/process', async function(req, res, next) {
         try {
             const merger = new PDFMerger();
             for (const file of files) {
+                console.log(file);
                 if(file.pages !== '') {
                     await merger.add(file.filename, file.pages);
                 }else {

@@ -79,7 +79,8 @@ block append scripts
                     html += `<tr data-id="${e.id}">
                                 <td><input type="checkbox" class="form-check-input hide data-check" data-file="${e.filename}" data-id="${e.id}" onchange="handleMark(this)"/></td>
                                 <td class="file-name" data-file="${e.filename}">${e.originalname}</td>
-                                <td>${(parseInt(e.size) / 1000000).toFixed(1)} MB</td>
+                                <td>${e.size < 100000 ? (e.size / 1000).toFixed(1) + ' KB' : (e.size / 1000000).toFixed(1) + ' MB'
+                    }</td>
                                 <td><input type="text" class="form-control form-control-sm data-halaman" data-id="${e.id}" onchange="handleHalaman(this)" placeholder="Ex: 1,3,5 | 2-5 | 9"/></td>
                                 <td class="drag-icon"></td>
                             </tr>`;
@@ -195,7 +196,11 @@ block append scripts
                             <div class="dz-details">
                                 <div class="dz-size">
                                     <span data-dz-size="">
-                                        <strong>${(file.size / 1000000).toFixed(1)}</strong> MB
+                                        <span style="font-weight: bold">${
+                                            file.size < 100000
+                                                ? (file.size / 1000).toFixed(1) + '<span style="font-weight: normal">KB</span>'
+                                                : (file.size / 1000000).toFixed(1) + '<span style="font-weight: normal">MB</span>'
+                                        }</span>
                                     </span>
                                 </div>
                             <div class="dz-filename">
@@ -259,11 +264,11 @@ block append scripts
                 return false;
             }
 
-            if (data.length < 2) {
-                $(e.target).html('Proses').prop('disabled', false);
-                alert('Minimal upload 2 file!');
-                return false;
-            }
+            // if (data.length < 2) {
+            //     $(e.target).html('Proses').prop('disabled', false);
+            //     alert('Minimal upload 2 file!');
+            //     return false;
+            // }
 
             if (namaFile.val() === '') {
                 $(e.target).html('Proses').prop('disabled', false);
@@ -283,7 +288,6 @@ block append scripts
                 }),
                 success: function (res) {
                     if (res.status) {
-                        $(e.target).html('Proses').prop('disabled', false);
                         window.location.href = '/pdf/download/' + res.message.filename;
                         namaFile.val('').removeClass('is-invalid');
                         const reload = confirm('Proses berhasil, apakah anda ingin menghapus file sebelumnya?');
@@ -296,6 +300,7 @@ block append scripts
                     } else {
                         alert(res.message);
                     }
+                    $(e.target).html('Proses').prop('disabled', false);
                 },
                 error: function (err) {
                     console.log(err)
