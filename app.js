@@ -26,11 +26,11 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
 
 // configuration for production mode
 
 const toolkit = express.Router();
+toolkit.use('/', express.static(path.join(__dirname, 'public')))
 toolkit.use('/', indexRouter);
 toolkit.use('/users', usersRouter);
 toolkit.use('/pdf', pdfRouter);
