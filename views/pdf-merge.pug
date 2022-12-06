@@ -1,7 +1,7 @@
 extends layout
 block append styles
     link(rel='stylesheet' href='https://unpkg.com/dropzone@5/dist/min/dropzone.min.css' type='text/css')
-    link(href='vendor/web-pdf-viewer/css/pdfjs-viewer.css' rel='stylesheet' )
+    link(href=`${base_url()}/vendor/web-pdf-viewer/css/pdfjs-viewer.css` rel='stylesheet' )
     //- link(href='vendor/web-pdf-viewer/css/pdftoolbar.css' rel='stylesheet' )
 
 block content 
@@ -9,7 +9,7 @@ block content
         .col-xl-6.col-md-6
             .row
                 .col-xl-12.col-md-12
-                    form#upload-widget.dropzone(method='post' action='/pdf/upload')
+                    form#upload-widget.dropzone(method='post' action=`${base_url()}/pdf/upload`)
                         .fallback
                             input(name='file' type='file')
 
@@ -66,9 +66,10 @@ block content
 block append scripts
     script(src='https://unpkg.com/dropzone@5/dist/min/dropzone.min.js')
     script(src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js')
-    script(src='vendor/tablednd/stable/jquery.tablednd.js')
-    script(src='vendor/web-pdf-viewer/js/pdfjs-viewer.js')
+    script(src=`${base_url()}/vendor/tablednd/stable/jquery.tablednd.js`)
+    script(src=`${base_url()}/vendor/web-pdf-viewer/js/pdfjs-viewer.js`)
     script.
+        window.base_url = '#{base_url()}';
         const pdfjsLib = window['pdfjs-dist/build/pdf'];
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
     script.
@@ -191,7 +192,7 @@ block append scripts
                     $('#upload-widget').append(`
                         <div class="dz-preview dz-file-preview dz-processing dz-success dz-complete">
                             <div class="dz-image">
-                                <img data-dz-thumbnail="" src="/pdf.png" alt="${file.originalname}">
+                                <img data-dz-thumbnail="" src="${window.base_url}/pdf.png" alt="${file.originalname}">
                             </div>
                             <div class="dz-details">
                                 <div class="dz-size">
@@ -288,7 +289,7 @@ block append scripts
                 }),
                 success: function (res) {
                     if (res.status) {
-                        window.location.href = '/pdf/download/' + res.message.filename;
+                        window.location.href = window.base_url + '/pdf/download/' + res.message.filename;
                         namaFile.val('').removeClass('is-invalid');
                         const reload = confirm('Proses berhasil, apakah anda ingin menghapus file sebelumnya?');
                         if (reload) {
@@ -386,7 +387,7 @@ block append scripts
                     genList(files);
                 });
                 this.on('addedfile', function (file) {
-                    $(file.previewElement).find(".dz-image img").attr("src", "/pdf.png");
+                    $(file.previewElement).find(".dz-image img").attr("src", window.base_url + "/pdf.png");
                 });
             }
         };

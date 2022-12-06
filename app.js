@@ -3,12 +3,20 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
-
+const dotenv = require('dotenv');
+dotenv.config();
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const pdfRouter = require('./routes/pdf-merge');
 
 const app = express();
+
+app.locals = {
+    ...app.locals,
+    base_url: function () {
+        return process.env.APP_URL
+    }
+}
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

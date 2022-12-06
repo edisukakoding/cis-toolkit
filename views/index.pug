@@ -4,10 +4,10 @@ block content
   .row.mt-4
     .col-xl-3.col-md-6
       .card.mb-4(style="width: 260px")
-        img.card-img-top(src='/images/pdf.png' style="padding: 5px")
+        img.card-img-top(src=`${base_url()}/images/pdf.png` style="padding: 5px")
         .card-body(style="padding: 5px 10px;")
           strong PDF Merge
         .card-footer.d-flex.align-items-center.justify-content-between(style="background-color: rgba(250, 255, 219, 0.33);")
-          a.stretched-link.text-dark(href='/pdf' style="text-decoration: none") Visit
+          a.stretched-link.text-dark(href=`${base_url()}/pdf` style="text-decoration: none") Visit
           .small
             i.material-icons-outlined navigate_next

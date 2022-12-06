@@ -6,13 +6,13 @@ head
     meta(name='description' content='')
     meta(name='author' content='')
     title CIS - Toolkit
-    link(href='vendor/sbadmin/css/styles.css' rel='stylesheet')
-    link(href='stylesheets/style.css' rel='stylesheet' )
+    link(href=`${base_url()}/vendor/sbadmin/css/styles.css` rel='stylesheet')
+    link(href=`${base_url()}/stylesheets/style.css` rel='stylesheet' )
     link(href='https://fonts.googleapis.com/icon?family=Material+Icons+Outlined' rel='stylesheet')
     block styles
 body
     nav.sb-topnav.navbar.navbar-expand.navbar-dark.bg-dark
-        a.navbar-brand.ps-3(href='/') CIS Toolkit
+        a.navbar-brand.ps-3(href=base_url()) CIS Toolkit
         button#sidebarToggle.btn.btn-link.btn-sm.order-1.order-lg-0.me-4.me-lg-0(href='#!')
             i.fas.fa-bars
     #layoutSidenav
@@ -23,7 +23,7 @@ body
                         .sb-sidenav-menu-heading Core
                         a.nav-link(href='/pdf')
                             .sb-nav-link-icon
-                                i.fas.fa-tachometer-alt
+                                i.fas.fa-file-pdf
                             |                                 PDF Merge
         #layoutSidenav_content
             main
@@ -45,8 +45,9 @@ body
                             a(href='#') Terms &amp; Conditions
     //- jquery
     script(src='https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js' crossorigin='anonymous')
-    script(src='vendor/sbadmin/js/scripts.js')
+    script(src=`${base_url()}/vendor/sbadmin/js/scripts.js`)
     script(src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js')
+    script(src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous")
     script.
         $(window).on('load', function () {
             $('.wrapper-loader').fadeOut();
