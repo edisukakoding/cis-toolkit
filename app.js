@@ -28,9 +28,18 @@ app.use(express.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
-app.use('/pdf', pdfRouter);
+// configuration for production mode
+
+const toolkit = express.Router();
+toolkit.use('/', indexRouter);
+toolkit.use('/users', usersRouter);
+toolkit.use('/pdf', pdfRouter);
+
+if(process.env.NODE_ENV === 'production') {
+    app.use('/toolkit', toolkit);
+}else {
+    app.use(toolkit);
+}
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
