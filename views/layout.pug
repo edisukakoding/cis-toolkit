@@ -5,33 +5,11 @@ head
     meta(name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no')
     meta(name='description' content='')
     meta(name='author' content='')
-    title CIS - Tools
-
-    //- jquery
-    script(src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js')
-
-    //- sb admin
+    title CIS - Toolkit
     link(href='vendor/sbadmin/css/styles.css' rel='stylesheet')
-    script(src='https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js' crossorigin='anonymous')
-    script(src='vendor/sbadmin/js/scripts.js')
-
-    //- dropzone
-    script(src='https://unpkg.com/dropzone@5/dist/min/dropzone.min.js')
-    link(rel='stylesheet' href='https://unpkg.com/dropzone@5/dist/min/dropzone.min.css' type='text/css')
-
-    //- pdf viewer
-    link(href='https://fonts.googleapis.com/icon?family=Material+Icons+Outlined' rel='stylesheet')
-    script(src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js')
-    script(src='vendor/web-pdf-viewer/js/pdfjs-viewer.js')
-    link(href='vendor/web-pdf-viewer/css/pdfjs-viewer.css' rel='stylesheet' )
-    //- link(href='vendor/web-pdf-viewer/css/pdftoolbar.css' rel='stylesheet' )
-    script.
-        // Let's initialize the PDFjs library
-        var pdfjsLib = window['pdfjs-dist/build/pdf'];
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
-
-    //- custom css
     link(href='stylesheets/style.css' rel='stylesheet' )
+    link(href='https://fonts.googleapis.com/icon?family=Material+Icons+Outlined' rel='stylesheet')
+    block styles
 body
     nav.sb-topnav.navbar.navbar-expand.navbar-dark.bg-dark
         a.navbar-brand.ps-3(href='/') CIS Toolkit
@@ -50,6 +28,12 @@ body
         #layoutSidenav_content
             main
                 .container-fluid.px-4
+                    .wrapper-loader
+                        .loader
+                            div
+                            div
+                            div
+                            div
                     block content
             footer.py-4.bg-light.mt-auto
                 .container-fluid.px-4
@@ -59,4 +43,13 @@ body
                             a(href='#') Privacy Policy
                             |                                 &middot;
                             a(href='#') Terms &amp; Conditions
+    //- jquery
+    script(src='https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js' crossorigin='anonymous')
+    script(src='vendor/sbadmin/js/scripts.js')
+    script(src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js')
+    script.
+        $(window).on('load', function () {
+            $('.wrapper-loader').fadeOut();
+        })
+    block scripts
 

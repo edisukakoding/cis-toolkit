@@ -1,4 +1,8 @@
 extends layout
+block append styles
+    link(rel='stylesheet' href='https://unpkg.com/dropzone@5/dist/min/dropzone.min.css' type='text/css')
+    link(href='vendor/web-pdf-viewer/css/pdfjs-viewer.css' rel='stylesheet' )
+    //- link(href='vendor/web-pdf-viewer/css/pdftoolbar.css' rel='stylesheet' )
 
 block content 
     .row.mt-4
@@ -8,6 +12,7 @@ block content
                     form#upload-widget.dropzone(method='post' action='/pdf/upload')
                         .fallback
                             input(name='file' type='file')
+
             .row.mt-3
                 .col-xl-12.col-md-12
                     table.table#list-files
@@ -18,16 +23,16 @@ block content
                                 th File 
                                 th Size 
                                 th(style="width: 24%") Halaman
+                                th Reorder
                         tbody
-                    hr
             .row.mt-3
                 .col-xl-6.col-md-6
                     .mb-3
                         label.form-label(for='namafile') Nama File
                         input#namafile.form-control(type='text' placeholder='PDF-MERGE (tanpa ekstensi)')
-                    button.btn.btn-primary(type="button" onclick="tandai(this)") Tandai
+                    button.btn.btn-primary#btn-tandai(type="button") Tandai
                     | &nbsp;
-                    button.btn.btn-danger.hide#btn-hapus(type="button" onclick="hapus(this)") Hapus
+                    button.btn.btn-danger.hide#btn-hapus(type="button") Hapus
                     | &nbsp;
                     button.btn.btn-success#btn-proses(type="button") Proses
         .col-xl-6.col-md-6
@@ -57,258 +62,82 @@ block content
                             button.btn.btn-secondary.btn-sm(onclick="pdfViewer.setZoom('fit')")
                                 i.material-icons-outlined fit_screen
                     .pdfjs-viewer
-    script(type='text/javascript').
-        const markAll   = $('#mark-all');
-        const namaFile  = $('#namafile');
 
-
-        let pdfViewer = new PDFjsViewer($('.pdfjs-viewer'), {
-            onZoomChange: function (zoom) {
-                zoom = parseInt(zoom * 10000) / 100;
-                $('.zoomval').text(zoom + '%');
-            },
-            onActivePageChanged: function (page, pageno) {
-                $('.pageno').text(pageno + '/' + this.getPageCount());
-            },
-        });
-
-        if (getStorage().length) {
-            genList(getStorage());
-            genThumbnail();
-        }
-
-        Dropzone.options.uploadWidget = {
-            paramName: 'file',
-            maxFilesize: 10, // MB
-            dictDefaultMessage: 'Seret file pdf ke sini untuk diunggah, atau klik untuk memilih salah satu',
-            acceptedFiles: 'application/pdf',
-            init: function () {
-                this.on('success', function (file, resp) {
-                    let files = [];
-                    const storages = getStorage();
-                    if ( storages !== null && storages.length) {
-                        files = [
-                            ...storages,
-                            {
-                                id: Date.now(),
-                                filename: resp.filename,
-                                originalname: resp.originalname,
-                                size: resp.size,
-                                mark: false,
-                                pages: ''
-                            }
-                        ]
-                    } else {
-                        files = [
-                            ...files,
-                            {
-                                id: Date.now(),
-                                filename: resp.filename,
-                                originalname: resp.originalname,
-                                size: resp.size,
-                                mark: false,
-                                pages: ''
-                            }
-                        ];
-                    }
-                    localStorage.setItem('files', JSON.stringify(files));
-                    genList(files);
-                });
-                this.on('addedfile', function (file) {
-                    $(file.previewElement).find(".dz-image img").attr("src", "/pdf.png");
-                });
-            }
-        };
-
+block append scripts
+    script(src='https://unpkg.com/dropzone@5/dist/min/dropzone.min.js')
+    script(src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js')
+    script(src='vendor/tablednd/stable/jquery.tablednd.js')
+    script(src='vendor/web-pdf-viewer/js/pdfjs-viewer.js')
+    script.
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+    script.
         function genList(files) {
             if (files.length) {
                 let html = '';
                 files.forEach(function (e) {
-                    html += `<tr>
+                    html += `<tr data-id="${e.id}">
                                 <td><input type="checkbox" class="form-check-input hide data-check" data-file="${e.filename}" data-id="${e.id}" onchange="handleMark(this)"/></td>
-                                <td onclick="show(this, '${e.filename}')" class="file-name">${e.originalname}</td>
+                                <td class="file-name" data-file="${e.filename}">${e.originalname}</td>
                                 <td>${(parseInt(e.size) / 1000000).toFixed(1)} MB</td>
                                 <td><input type="text" class="form-control form-control-sm data-halaman" data-id="${e.id}" onchange="handleHalaman(this)" placeholder="Ex: 1,3,5 | 2-5 | 9"/></td>
+                                <td class="drag-icon"></td>
                             </tr>`;
                 });
                 $('#list-files > tbody').html(html);
+                dragNdrop();
             } else {
-                $('#list-files > tbody').html('<tr><td colspan="4" class="text-center">Tidak ada data</td></tr>');
+                $('#list-files > tbody').html('<tr><td colspan="5" class="text-center">Tidak ada file</td></tr>');
             }
         }
 
-        function tandai(e) {
-            if ($('#list-files > tbody > tr > td:first-child > input').hasClass('hide')) {
-                $('#list-files > tbody > tr > td:first-child > input').removeClass('hide');
-                $(e).text('Batal');
-                $($(e).siblings()[1]).removeClass('hide');
-                markAll.removeClass('hide');
-            } else {
-                $('#list-files > tbody > tr > td:first-child > input').addClass('hide');
-                $(e).text('Tandai');
-                $($(e).siblings()[1]).addClass('hide');
-                markAll.addClass('hide');
-                $('input[type="checkbox"]').each(function (i, e) {
-                    $(e).prop('checked', false);
-                });
+        function actionTandai(e) {
+            const inputCheck = $('input:checkbox');
+            const btnHapus = $('#btn-hapus');
 
+            if (inputCheck.hasClass('hide')) {
+                $(e.target).text('Batal');
+                btnHapus.removeClass('hide');
+                inputCheck.removeClass('hide');
+            } else {
+                inputCheck.addClass('hide');
+                $(e.target).text('Tandai');
+                btnHapus.addClass('hide');
+                inputCheck.each((i, e) => $(e).prop('checked', false));
                 setStorage(getStorage().map(d => ({...d, mark: false})));
             }
         }
 
-        function show(el, file) {
-            pdfViewer.loadDocument(`pdfs/${file}`).then(function () {
-                pdfViewer.setZoom('fit');
-            });
-
-            $('#list-files > tbody > tr').each(function (i, e) {
-                $(e).removeClass('active');
-            });
-
-            $(el).parents('tr').addClass('active');
-        }
-
-        function hapus(el) {
-            const data = getStorage().filter(d => d.mark === true).map(d => d.filename);
-
-            if(!data.length) {
-                return false;
-            }
-
-            $.ajax({
-                url: '/pdf/delete',
-                type: 'POST',
-                dataType: 'json',
-                contentType: 'application/json',
-                data: JSON.stringify(data),
-                success: function (res) {
-                    if(!res.status) {
-                        alert(res.message);
-                        return false;
-                    }
-
-                    let storages = getStorage();
-                    data.forEach(function (e) {
-                        storages = storages.filter(d => d.filename !== e);
-                    });
-                    setStorage(storages);
-                    genList(storages);
-                    $(el).addClass('hide');
-                    markAll.addClass('hide');
-                    $($(el).siblings()[1]).text('Tandai');
-                    genThumbnail();
-                },
-                error: function (err) {
-                    console.log(err)
-                }
-            });
-        }
-
-        markAll.on('change', function () {
+        function actionMarkAll() {
             const storages = getStorage();
 
-            if($(this).is(':checked')) {
+            if ($(this).is(':checked')) {
                 $('.data-check').each(function (i, e) {
                     $(e).prop('checked', true);
                 });
 
                 setStorage(storages.map(d => ({...d, mark: true})));
-            }else {
+            } else {
                 $('.data-check').each(function (i, e) {
                     $(e).prop('checked', false);
                 });
 
                 setStorage(storages.map(d => ({...d, mark: false})));
             }
-        });
-
-        function genThumbnail() {
-            $('.dz-preview').each(function (i, e) {
-                $(e).remove();
-            });
-
-            let storages = localStorage.getItem('files');
-            if(storages !== null && storages.length) {
-                storages = JSON.parse(storages);
-                storages.forEach(function (file) {
-                    $('#upload-widget').append(`
-                        <div class="dz-preview dz-file-preview dz-processing dz-success dz-complete">
-                            <div class="dz-image">
-                                <img data-dz-thumbnail="" src="/pdf.png" alt="${file.originalname}">
-                            </div>
-                            <div class="dz-details">
-                                <div class="dz-size">
-                                    <span data-dz-size="">
-                                        <strong>${(file.size / 1000000).toFixed(1)}</strong> MB
-                                    </span>
-                                </div>
-                            <div class="dz-filename">
-                                <span data-dz-name="">${file.originalname}</span>
-                            </div>
-                        </div>
-                    `);
-                });
-            }
         }
 
-        $('#btn-proses').on('click', function () {
-            $(this).html(`<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>Loading...`).prop('disabled', true);
-
-            let data  = getStorage();
-            const check = data.filter(d => d.mark === true);
-            if(check.length) {
-                data = check;
+        function getStorage() {
+            const storages = localStorage.getItem('files');
+            if (storages !== null && storages.length) {
+                return JSON.parse(storages).sort((a, b) => a.order - b.order);
             }
 
-            if(!data.length) {
-                $('#btn-proses').html('Proses').prop('disabled', false);
-                alert('File tidak boleh kosong!')
-                return false;
-            }
+            return [];
+        }
 
-            if(data.length < 2) {
-                $('#btn-proses').html('Proses').prop('disabled', false);
-                alert('Minimal upload 2 file!');
-                return false;
-            }
-
-            if(namaFile.val() === '') {
-                $('#btn-proses').html('Proses').prop('disabled', false);
-                namaFile.addClass('is-invalid');
-                alert('Nama File tidak boleh kosong');
-                return false;
-            }
-
-            $.ajax({
-                url: '/pdf/process',
-                type: 'POST',
-                dataType: 'json',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    namafile: namaFile.val(),
-                    data: data
-                }),
-                success: function (res) {
-                    if(res.status) {
-                        $('#btn-proses').html('Proses').prop('disabled', false);
-                        window.location.href = '/pdf/download/' + res.message.filename;
-                        namaFile.val('');
-                        const reload = confirm('Proses berhasil, apakah anda ingin menghapus file sebelumnya?');
-                        if(reload) {
-                            if(data.length === getStorage().length) {
-                                setStorage(getStorage().map(d => ({...d, mark: true})));
-                            }
-                            $('#btn-hapus').trigger('click');
-                        }
-                    }else {
-                        alert(res.message);
-                    }
-                },
-                error: function (err) {
-                    console.log(err)
-                }
-            });
-        });
+        function setStorage(data) {
+            localStorage.setItem('files', JSON.stringify(data));
+        }
 
         function handleHalaman(e) {
             const data = getStorage().map((d) => {
@@ -334,15 +163,234 @@ block content
             setStorage(data);
         }
 
-        function getStorage() {
-            const storages = localStorage.getItem('files');
-            if(storages !== null && storages.length) {
-                return JSON.parse(storages);
+        function actionShow(event, pdfViewer) {
+            if ($(event.target).hasClass('file-name')) {
+                const file = $(event.target).data('file');
+                pdfViewer.loadDocument(`pdfs/${file}`).then(function () {
+                    pdfViewer.setZoom('fit');
+                });
+
+                $('#list-files > tbody > tr').each(function (i, e) {
+                    $(e).removeClass('active');
+                });
+
+                $(event.target).parents('tr').addClass('active');
+            }
+        }
+
+        function genThumbnail() {
+            $('.dz-preview').each(function (i, e) {
+                $(e).remove();
+            });
+
+            let storages = localStorage.getItem('files');
+            if (storages !== null && storages.length) {
+                storages = JSON.parse(storages);
+                storages.forEach(function (file) {
+                    $('#upload-widget').append(`
+                        <div class="dz-preview dz-file-preview dz-processing dz-success dz-complete">
+                            <div class="dz-image">
+                                <img data-dz-thumbnail="" src="/pdf.png" alt="${file.originalname}">
+                            </div>
+                            <div class="dz-details">
+                                <div class="dz-size">
+                                    <span data-dz-size="">
+                                        <strong>${(file.size / 1000000).toFixed(1)}</strong> MB
+                                    </span>
+                                </div>
+                            <div class="dz-filename">
+                                <span data-dz-name="">${file.originalname}</span>
+                            </div>
+                        </div>
+                    `);
+                });
+            }
+        }
+
+        function actionHapus(el, pdfViewer) {
+            const data = getStorage().filter(d => d.mark === true).map(d => d.filename);
+
+            if (!data.length) {
+                return false;
             }
 
-            return [];
+            $.ajax({
+                url: '/pdf/delete',
+                type: 'POST',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (res) {
+                    if (!res.status) {
+                        alert(res.message);
+                        return false;
+                    }
+
+                    let storages = getStorage();
+                    data.forEach(function (e) {
+                        storages = storages.filter(d => d.filename !== e);
+                    });
+                    setStorage(storages);
+                    genList(storages);
+                    $(el.target).addClass('hide');
+                    $('#mark-all').addClass('hide');
+                    $('#btn-tandai').text('Tandai');
+                    genThumbnail();
+                    pdfViewer.loadDocument(null).catch(() => {});
+                },
+                error: function (err) {
+                    console.log(err)
+                }
+            });
         }
 
-        function setStorage(data) {
-            localStorage.setItem('files', JSON.stringify(data));
+        function actionProses(e, namaFile) {
+            $(e.target).html(`<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>Loading...`).prop('disabled', true);
+
+            let data = getStorage();
+            const check = data.filter(d => d.mark === true);
+            if (check.length) {
+                data = check;
+            }
+
+            if (!data.length) {
+                $(e.target).html('Proses').prop('disabled', false);
+                alert('File tidak boleh kosong!')
+                return false;
+            }
+
+            if (data.length < 2) {
+                $(e.target).html('Proses').prop('disabled', false);
+                alert('Minimal upload 2 file!');
+                return false;
+            }
+
+            if (namaFile.val() === '') {
+                $(e.target).html('Proses').prop('disabled', false);
+                namaFile.addClass('is-invalid');
+                alert('Nama File tidak boleh kosong');
+                return false;
+            }
+
+            $.ajax({
+                url: '/pdf/process',
+                type: 'POST',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    namafile: namaFile.val(),
+                    data: data
+                }),
+                success: function (res) {
+                    if (res.status) {
+                        $(e.target).html('Proses').prop('disabled', false);
+                        window.location.href = '/pdf/download/' + res.message.filename;
+                        namaFile.val('').removeClass('is-invalid');
+                        const reload = confirm('Proses berhasil, apakah anda ingin menghapus file sebelumnya?');
+                        if (reload) {
+                            if (data.length === getStorage().length) {
+                                setStorage(getStorage().map(d => ({...d, mark: true})));
+                            }
+                            $('#btn-hapus').trigger('click').addClass('hide');
+                        }
+                    } else {
+                        alert(res.message);
+                    }
+                },
+                error: function (err) {
+                    console.log(err)
+                }
+            });
         }
+
+        function init() {
+
+            genList(getStorage());
+            genThumbnail();
+
+            return new PDFjsViewer($('.pdfjs-viewer'), {
+                onZoomChange: function (zoom) {
+                    zoom = parseInt(zoom * 10000) / 100;
+                    $('.zoomval').text(zoom + '%');
+                },
+                onActivePageChanged: function (page, pageno) {
+                    $('.pageno').text(pageno + '/' + this.getPageCount());
+                }
+            });
+        }
+
+        function dragNdrop() {
+            $('#list-files').tableDnD({
+                onDragClass: "on-drag",
+                onDrop: function () {
+                    $('#list-files tr').each(function(i, e) {
+                        setStorage(
+                            getStorage()
+                                .map(
+                                    d => typeof $(e).data('id') !== undefined && d.id === $(e).data('id')
+                                        ? {...d, order: $(e).index()}
+                                        : d
+                                )
+                        )
+                    })
+                }
+            });
+
+            $("#list-files tbody tr").hover(function () {
+                $(this.cells[4]).addClass('show-drag-handle');
+            }, function () {
+                $(this.cells[4]).removeClass('show-drag-handle');
+            });
+        }
+    script.
+        Dropzone.options.uploadWidget = {
+            paramName: 'file',
+            maxFilesize: 10, // MB
+            dictDefaultMessage: 'Seret file pdf ke sini untuk diunggah, atau klik untuk memilih salah satu',
+            acceptedFiles: 'application/pdf',
+            init: function () {
+                this.on('success', function (file, resp) {
+                    let files = [];
+                    const storages = getStorage();
+                    if (storages !== null && storages.length) {
+                        files = [
+                            ...storages,
+                            {
+                                id: Date.now(),
+                                filename: resp.filename,
+                                originalname: resp.originalname,
+                                size: resp.size,
+                                mark: false,
+                                pages: '',
+                            }
+                        ]
+                    } else {
+                        files = [
+                            ...files,
+                            {
+                                id: Date.now(),
+                                filename: resp.filename,
+                                originalname: resp.originalname,
+                                size: resp.size,
+                                mark: false,
+                                pages: '',
+                            }
+                        ];
+                    }
+                    setStorage(files.map((d,i) => ({...d, order: i})));
+                    genList(files);
+                });
+                this.on('addedfile', function (file) {
+                    $(file.previewElement).find(".dz-image img").attr("src", "/pdf.png");
+                });
+            }
+        };
+    script.
+        $(document).ready(function () {
+            window.pdfViewer = init();
+            $('#btn-tandai').on('click', actionTandai);
+            $('#mark-all').on('change', actionMarkAll);
+            $(document).on('click', e => (actionShow)(e, window.pdfViewer));
+            $('#btn-hapus').on('click', (e) => (actionHapus)(e, window.pdfViewer));
+            $('#btn-proses').on('click', (e) => (actionProses)(e, $('#namafile')));
+        });
