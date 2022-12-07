@@ -221,7 +221,7 @@ block append scripts
             }
 
             $.ajax({
-                url: '/pdf/delete',
+                url: window.base_url + '/pdf/delete',
                 type: 'POST',
                 dataType: 'json',
                 contentType: 'application/json',
@@ -279,7 +279,7 @@ block append scripts
             }
 
             $.ajax({
-                url: '/pdf/process',
+                url: window.base_url + '/pdf/process',
                 type: 'POST',
                 dataType: 'json',
                 contentType: 'application/json',

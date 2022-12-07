@@ -4,6 +4,7 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const dotenv = require('dotenv');
+
 dotenv.config();
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
@@ -29,17 +30,13 @@ app.use(cookieParser());
 
 // configuration for production mode
 
-const toolkit = express.Router();
-toolkit.use('/', express.static(path.join(__dirname, 'public')))
-toolkit.use('/', indexRouter);
-toolkit.use('/users', usersRouter);
-toolkit.use('/pdf', pdfRouter);
+const router = express.Router();
+router.use(express.static(path.join(__dirname, 'public')));
+router.use('/', indexRouter);
+router.use('/users', usersRouter);
+router.use('/pdf', pdfRouter);
 
-if(process.env.NODE_ENV === 'production') {
-    app.use('/toolkit', toolkit);
-}else {
-    app.use(toolkit);
-}
+app.use('/toolkit', router);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
