@@ -12,13 +12,6 @@ const pdfRouter = require('./routes/pdf-merge');
 
 const app = express();
 
-app.locals = {
-    ...app.locals,
-    base_url: function () {
-        return process.env.APP_URL
-    }
-}
-
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
